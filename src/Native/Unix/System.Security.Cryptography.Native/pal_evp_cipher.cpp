@@ -179,9 +179,5 @@ extern "C" const EVP_CIPHER* CryptoNative_EvpRC2Ecb()
 
 extern "C" const EVP_CIPHER* CryptoNative_EvpRC2Cbc()
 {
-#ifdef OPENSSL_NO_RC2
-    return NULL;
-#else
     return EVP_rc2_cbc();
-#endif
 }
