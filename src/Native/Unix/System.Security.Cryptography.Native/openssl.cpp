@@ -1094,7 +1094,7 @@ extern "C" int32_t CryptoNative_BioTell(BIO* bio)
         return -1;
     }
 
-    return BIO_tell(bio);
+    return (int32_t)BIO_ctrl(bio, BIO_C_FILE_TELL, 0, NULL);
 }
 
 /*
@@ -1121,7 +1121,7 @@ extern "C" int32_t CryptoNative_BioSeek(BIO* bio, int32_t ofs)
         return -1;
     }
 
-    return BIO_seek(bio, ofs);
+    return (int32_t)BIO_ctrl(bio, BIO_C_FILE_SEEK, ofs, NULL);
 }
 
 /*
@@ -1208,6 +1208,7 @@ extern "C" int32_t CryptoNative_LookupFriendlyNameByOid(const char* oidValue, co
 
     if (!oid)
     {
+#ifndef OPENSSL_IS_BORINGSSL
         unsigned long err = ERR_peek_last_error();
 
         // If the most recent error pushed onto the error queue is NOT from OID parsing
@@ -1216,6 +1217,7 @@ extern "C" int32_t CryptoNative_LookupFriendlyNameByOid(const char* oidValue, co
         {
             return -1;
         }
+#endif
 
         return 0;
     }

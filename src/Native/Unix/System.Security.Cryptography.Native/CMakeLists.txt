@@ -5,6 +5,10 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 # These are happening inside of OpenSSL-defined macros out of our control
 add_compile_options(-Wno-cast-align)
+add_compile_options(-Wno-reserved-id-macro)
+add_compile_options(-Wno-documentation)
+add_compile_options(-Wno-used-but-marked-unused)
+add_compile_options(-Wno-cast-qual)
 
 add_definitions(-DPIC=1)
 

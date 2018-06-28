@@ -30,7 +30,7 @@ extern "C" void CryptoNative_Pkcs12Destroy(PKCS12* p12)
 extern "C" PKCS12* CryptoNative_Pkcs12Create(char* pass, EVP_PKEY* pkey, X509* cert, X509Stack* ca)
 {
     return PKCS12_create(
-        pass, nullptr, pkey, cert, ca, NID_undef, NID_undef, PKCS12_DEFAULT_ITER, PKCS12_DEFAULT_ITER, 0);
+        pass, NULL, pkey, cert, ca, NID_undef, NID_undef, 0, 0, 0);
 }
 
 extern "C" int32_t CryptoNative_GetPkcs12DerSize(PKCS12* p12)

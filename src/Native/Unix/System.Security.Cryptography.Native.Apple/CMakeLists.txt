@@ -3,6 +3,8 @@ project(System.Security.Cryptography.Native.Apple)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
+add_compile_options(-Wno-deprecated-declarations)
+
 add_definitions(-DPIC=1)
 
 find_library(COREFOUNDATION_LIBRARY CoreFoundation)

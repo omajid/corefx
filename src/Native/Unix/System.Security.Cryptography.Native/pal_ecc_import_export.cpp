@@ -5,8 +5,25 @@
 #include "pal_ecc_import_export.h"
 #include "pal_utilities.h"
 
-ECCurveType MethodToCurveType(EC_METHOD* method)
+static ECCurveType GroupToCurveType(const EC_GROUP* group)
 {
+#ifdef OPENSSL_IS_BORINGSSL
+    switch (EC_GROUP_get_curve_name(group)) {
+        case NID_secp384r1:
+        case NID_secp224r1:
+            return ECCurveType::PrimeMontgomery;
+        case NID_secp521r1:
+        case NID_X9_62_prime256v1:
+        default:
+            return ECCurveType::PrimeShortWeierstrass;
+    }
+#else
+    const EC_METHOD* method;
+
+    method = EC_GROUP_method_of(group);
+    if (!method)
+        return ECCurveType::Unspecified;
+
     if (method == EC_GFp_mont_method())
         return ECCurveType::PrimeMontgomery;
 
@@ -19,9 +36,11 @@ ECCurveType MethodToCurveType(EC_METHOD* method)
         return ECCurveType::PrimeShortWeierstrass;
 
     return ECCurveType::Unspecified;
+#endif
 }
 
-const EC_METHOD* CurveTypeToMethod(ECCurveType curveType)
+#ifndef OPENSSL_IS_BORINGSSL
+static const EC_METHOD* CurveTypeToMethod(ECCurveType curveType)
 {
     if (curveType == ECCurveType::PrimeShortWeierstrass)
         return EC_GFp_simple_method();
@@ -36,6 +55,7 @@ const EC_METHOD* CurveTypeToMethod(ECCurveType curveType)
 
     return nullptr; //Edwards and others
 }
+#endif
 
 extern "C" ECCurveType CryptoNative_EcKeyGetCurveType(
     const EC_KEY* key)
@@ -43,10 +63,7 @@ extern "C" ECCurveType CryptoNative_EcKeyGetCurveType(
     const EC_GROUP* group = EC_KEY_get0_group(key);
     if (!group) return ECCurveType::Unspecified;
 
-    const EC_METHOD* method = EC_GROUP_method_of(group);
-    if (!method) return ECCurveType::Unspecified;
-
-    return MethodToCurveType(const_cast<EC_METHOD*>(method));
+    return GroupToCurveType(group);
 }
 
 extern "C" int32_t CryptoNative_GetECKeyParameters(
@@ -186,17 +203,16 @@ extern "C" int32_t CryptoNative_GetECCurveParameters(
         return 0;
     }
 
-    EC_GROUP* group = nullptr;
-    EC_POINT* G = nullptr;
-    EC_METHOD* curveMethod = nullptr;
-    BIGNUM* xBn = nullptr;
-    BIGNUM* yBn = nullptr;
-    BIGNUM* pBn = nullptr;
-    BIGNUM* aBn = nullptr;
-    BIGNUM* bBn = nullptr;
-    BIGNUM* orderBn = nullptr;
-    BIGNUM* cofactorBn = nullptr;
-    BIGNUM* seedBn = nullptr;
+    EC_GROUP* group = NULL;
+    EC_POINT* G = NULL;
+    BIGNUM* xBn = NULL;
+    BIGNUM* yBn = NULL;
+    BIGNUM* pBn = NULL;
+    BIGNUM* aBn = NULL;
+    BIGNUM* bBn = NULL;
+    BIGNUM* orderBn = NULL;
+    BIGNUM* cofactorBn = NULL;
+    BIGNUM* seedBn = NULL;
 
     // Exit if CryptoNative_GetECKeyParameters failed
     if (rc != 1) 
@@ -217,12 +233,8 @@ extern "C" int32_t CryptoNative_GetECCurveParameters(
     if (!group) 
         goto error;
 
-    curveMethod = const_cast<EC_METHOD*>(EC_GROUP_method_of(group));
-    if (!curveMethod) 
-        goto error;
-
-    *curveType = MethodToCurveType(curveMethod);
-    if (*curveType == ECCurveType::Unspecified) 
+    *curveType = GroupToCurveType(group);
+    if (*curveType == Unspecified) 
         goto error;
 
     // Extract p, a, b
@@ -265,6 +277,7 @@ extern "C" int32_t CryptoNative_GetECCurveParameters(
         goto error;
 
     // Extract seed (optional)
+#ifndef OPENSSL_IS_BORINGSSL
     if (EC_GROUP_get0_seed(group))
     {
         seedBn = BN_bin2bn(EC_GROUP_get0_seed(group), 
@@ -281,6 +294,7 @@ extern "C" int32_t CryptoNative_GetECCurveParameters(
         */
     }
     else
+#endif
     {
         *seed = nullptr;
         *cbSeed = 0;
@@ -423,19 +437,27 @@ extern "C" EC_KEY* CryptoNative_EcKeyCreateByExplicitParameters(
     BIGNUM* orderBn = nullptr;
     BIGNUM* cofactorBn = nullptr;
 
+#ifdef OPENSSL_IS_BORINGSSL
+    if (curveType != PrimeShortWeierstrass) return NULL;
+#else
     // Create the group. Explicitly specify the curve type because using EC_GROUP_new_curve_GFp
     // will default to montgomery curve
     const EC_METHOD* curveMethod = CurveTypeToMethod(curveType);
     if (!curveMethod) return nullptr;
 
     EC_GROUP* group = EC_GROUP_new(curveMethod);
-    if (!group) return nullptr;
+    if (!group) return NULL;
+#endif
 
     pBn = BN_bin2bn(p, pLength, nullptr);
     // At this point we should use 'goto error' since we allocated memory
     aBn = BN_bin2bn(a, aLength, nullptr);
     bBn = BN_bin2bn(b, bLength, nullptr);
 
+#ifdef OPENSSL_IS_BORINGSSL
+    EC_GROUP* group = EC_GROUP_new_curve_GFp(pBn, aBn, bBn, NULL);
+    if (!group) return NULL;
+#else
 #if HAVE_OPENSSL_EC2M
     if (API_EXISTS(EC_GROUP_set_curve_GF2m) && (curveType == ECCurveType::Characteristic2))
     {
@@ -448,6 +470,7 @@ extern "C" EC_KEY* CryptoNative_EcKeyCreateByExplicitParameters(
         if (!EC_GROUP_set_curve_GFp(group, pBn, aBn, bBn, nullptr))    
             goto error;
     }
+#endif
 
     // Set generator, order and cofactor
     G = EC_POINT_new(group);
@@ -472,13 +495,17 @@ extern "C" EC_KEY* CryptoNative_EcKeyCreateByExplicitParameters(
     // Set seed (optional)
     if (seed && seedLength > 0)
     {
-        if (!EC_GROUP_set_seed(group, seed, static_cast<size_t>(seedLength)))
+#ifndef OPENSSL_IS_BORINGSSL
+        if (!EC_GROUP_set_seed(group, seed, (size_t)seedLength))
             goto error;
+#endif
     }
 
     // Validate group
-    if (!EC_GROUP_check(group, nullptr))
+#ifndef OPENSSL_IS_BORINGSSL
+    if (!EC_GROUP_check(group, NULL))
         goto error;
+#endif
 
     // Create key
     key = EC_KEY_new();

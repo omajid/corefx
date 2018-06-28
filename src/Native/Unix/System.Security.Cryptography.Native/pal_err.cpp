@@ -39,10 +39,19 @@ extern "C" uint64_t CryptoNative_ErrPeekLastError()
 
 extern "C" const char* CryptoNative_ErrReasonErrorString(uint64_t error)
 {
-    return ERR_reason_error_string(static_cast<unsigned long>(error));
+#ifdef OPENSSL_IS_BORINGSSL
+    return ERR_reason_error_string((uint32_t)error);
+#else
+    return ERR_reason_error_string((unsigned long)error);
+#endif
 }
 
 extern "C" void CryptoNative_ErrErrorStringN(uint64_t e, char* buf, int32_t len)
 {
-    ERR_error_string_n(static_cast<unsigned long>(e), buf, UnsignedCast(len));
+#ifdef OPENSSL_IS_BORINGSSL
+    ERR_error_string_n((uint32_t)e, buf, UnsignedCast(len));
+#else
+    ERR_error_string_n((unsigned long)e, buf, UnsignedCast(len));
+#endif
+
 }
