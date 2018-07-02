@@ -14,8 +14,12 @@ extern "C" HMAC_CTX* CryptoNative_HmacCreate(const uint8_t* key, int32_t keyLen,
     assert(key != nullptr || keyLen == 0);
     assert(keyLen >= 0);
     assert(md != nullptr);
-
-    std::unique_ptr<HMAC_CTX> ctx(new (std::nothrow) HMAC_CTX);
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+    HMAC_CTX* ctx = (HMAC_CTX*)malloc(sizeof(HMAC_CTX));
+#else
+    HMAC_CTX* ctx = HMAC_CTX_new();
+#endif
+    // std::unique_ptr<HMAC_CTX> ctx(new (std::nothrow) HMAC_CTX);
     if (ctx == nullptr)
     {
         // Allocation failed
@@ -28,7 +32,10 @@ extern "C" HMAC_CTX* CryptoNative_HmacCreate(const uint8_t* key, int32_t keyLen,
     if (keyLen == 0)
         key = &_;
 
-    HMAC_CTX_init(ctx.get());
+    // HMAC_CTX_init(ctx.get());
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+    HMAC_CTX_init(ctx);
+#endif
     int ret = HMAC_Init_ex(ctx.get(), key, keyLen, md, nullptr);
 
     if (!ret)
@@ -43,8 +50,14 @@ extern "C" void CryptoNative_HmacDestroy(HMAC_CTX* ctx)
 {
     if (ctx != nullptr)
     {
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
         HMAC_CTX_cleanup(ctx);
-        delete ctx;
+        free(ctx);
+#else
+        HMAC_CTX_free(ctx);
+#endif
+        // HMAC_CTX_cleanup(ctx);
+        // delete ctx;
     }
 }
 

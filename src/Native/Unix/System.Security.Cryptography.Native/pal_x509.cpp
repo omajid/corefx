@@ -230,12 +230,20 @@ extern "C" X509Stack* CryptoNative_X509StoreCtxGetChain(X509_STORE_CTX* ctx)
 
 extern "C" X509Stack* CryptoNative_X509StoreCtxGetSharedUntrusted(X509_STORE_CTX* ctx)
 {
-    return ctx ? ctx->untrusted : nullptr;
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+    return ctx ? ctx->untrusted : NULL;
+#else    
+    return ctx ? X509_STORE_CTX_get0_untrusted(ctx) : NULL;
+#endif
 }
 
 extern "C" X509* CryptoNative_X509StoreCtxGetTargetCert(X509_STORE_CTX* ctx)
 {
-    return ctx ? ctx->cert : nullptr;
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+    return ctx ? ctx->cert : NULL;
+#else    
+    return ctx ? X509_STORE_CTX_get0_cert(ctx) : NULL;
+#endif
 }
 
 extern "C" X509VerifyStatusCode CryptoNative_X509StoreCtxGetError(X509_STORE_CTX* ctx)
@@ -302,10 +310,10 @@ extern "C" X509* CryptoNative_X509UpRef(X509* x509)
 {
     if (x509 != nullptr)
     {
-#ifdef OPENSSL_IS_BORINGSSL
-        X509_up_ref(x509);
-#else
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
         CRYPTO_add(&x509->references, 1, CRYPTO_LOCK_X509);
+#else
+        X509_up_ref(x509);
 #endif
     }
 
