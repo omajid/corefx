@@ -38,7 +38,8 @@ bool OpenLibrary()
         libssl = dlopen(soName, RTLD_LAZY);
     }
 
-    if (libssl == nullptr)
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+    if (libssl == NULL)
     {
         // Debian 9 has dropped support for SSLv3 and so they have bumped their soname. Let's try it
         // before trying the version 1.0.0 to make it less probable that some of our other dependencies 
@@ -57,6 +58,13 @@ bool OpenLibrary()
         // Fedora derived distros use different naming for the version 1.0.0
         libssl = dlopen("libssl.so.10", RTLD_LAZY);
     }
+#else
+    if (libssl == NULL)
+    {
+        // Try the default versioned so naming as described in the OpenSSL doc
+        libssl = dlopen("libssl.so.1.1", RTLD_LAZY);
+    }
+#endif
 
     return libssl != nullptr;
 }
