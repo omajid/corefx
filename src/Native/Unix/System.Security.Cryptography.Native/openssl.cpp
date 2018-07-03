@@ -153,7 +153,7 @@ extern "C" ASN1_TIME* CryptoNative_GetX509CrlNextUpdate(X509_CRL* crl)
 {
     if (crl)
     {
-#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(OPENSSL_IS_BORINGSSL)
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
         return X509_CRL_get_nextUpdate(crl);
 #else
         return X509_CRL_get0_nextUpdate(crl);
@@ -1353,13 +1353,13 @@ extern "C" int32_t CryptoNative_LookupFriendlyNameByOid(const char* oidValue, co
     return 0;
 }
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
 // Lock used to make sure EnsureopenSslInitialized itself is thread safe
 static pthread_mutex_t g_initLock = PTHREAD_MUTEX_INITIALIZER;
 
 // Set of locks initialized for OpenSSL
 static pthread_mutex_t* g_locks = nullptr;
 
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
 /*
 Function:
 LockingCallback
@@ -1422,6 +1422,7 @@ non-zero on failure
 */
 extern "C" int32_t CryptoNative_EnsureOpenSslInitialized()
 {
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
     int ret = 0;
     int numLocks = 0;
     int locksInitialized = 0;
@@ -1462,14 +1463,12 @@ extern "C" int32_t CryptoNative_EnsureOpenSslInitialized()
         }
     }
 
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
     // Initialize the callback
     CRYPTO_set_locking_callback(LockingCallback);
 
 #ifdef __APPLE__
     // OSX uses an earlier version of OpenSSL which requires setting the CRYPTO_set_id_callback
     CRYPTO_set_id_callback(GetCurrentThreadId);
-#endif
 #endif
 
     // Initialize the random number generator seed
@@ -1504,6 +1503,13 @@ done:
 
     pthread_mutex_unlock(&g_initLock);
     return ret;
+#else
+    // Initialize the random number generator seed
+    int randPollResult = RAND_poll();
+    if (randPollResult < 1)
+        return 4;
+    return 0;
+#endif
 }
 
 /*
@@ -1517,13 +1523,9 @@ Version number as MNNFFRBB (major minor fix final beta/patch)
 */
 extern "C" uint32_t CryptoNative_OpenSslVersionNumber()
 {
-#ifdef FEATURE_DISTRO_AGNOSTIC_SSL
-    if (API_EXISTS(OpenSSL_version_num))
-        return (uint32_t)OpenSSL_version_num();
-    if (API_EXISTS(SSLeay))
-        return (uint32_t)SSLeay();
-    return 0;
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+    return (uint32_t)SSLeay();
 #else
-    return OPENSSL_VERSION_NUMBER;
+    return (uint32_t)OpenSSL_version_num();
 #endif
 }

@@ -31,7 +31,10 @@ CryptoNative_EvpCipherCreate2(const EVP_CIPHER* type, uint8_t* key, int32_t keyL
         return nullptr;
     }
 
-    EVP_CIPHER_CTX_init(ctx.get());
+    // EVP_CIPHER_CTX_init(ctx.get());
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+    EVP_CIPHER_CTX_init(ctx);
+#endif
 
     // Perform partial initialization so we can set the key lengths
     int ret = EVP_CipherInit_ex(ctx.get(), type, nullptr, nullptr, nullptr, 0);
@@ -74,8 +77,16 @@ extern "C" void CryptoNative_EvpCipherDestroy(EVP_CIPHER_CTX* ctx)
 {
     if (ctx != nullptr)
     {
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
         EVP_CIPHER_CTX_cleanup(ctx);
+<<<<<<< HEAD:src/Native/Unix/System.Security.Cryptography.Native/pal_evp_cipher.cpp
         delete ctx;
+=======
+        free(ctx);
+#else
+        EVP_CIPHER_CTX_free(ctx);
+#endif
+>>>>>>> Clean up OpenSSL 1.1/BoringSSL code, add support for FEATURE_DISTRO_AGNOSTIC_SSL.:src/Native/Unix/System.Security.Cryptography.Native/pal_evp_cipher.c
     }
 }
 

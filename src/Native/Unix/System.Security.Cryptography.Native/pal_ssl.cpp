@@ -19,8 +19,10 @@ extern "C" int32_t CryptoNative_EnsureOpenSslInitialized();
 extern "C" void CryptoNative_EnsureLibSslInitialized()
 {
     CryptoNative_EnsureOpenSslInitialized();
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
     SSL_library_init();
     SSL_load_error_strings();
+#endif
 }
 
 extern "C" const SSL_METHOD* CryptoNative_SslV2_3Method()
