@@ -18,7 +18,6 @@ include_directories(SYSTEM ${OPENSSL_INCLUDE_DIR})
 set(NATIVECRYPTO_SOURCES
     openssl.cpp
     pal_asn1.cpp
-    pal_asn1_print.cpp
     pal_bignum.cpp
     pal_bio.cpp
     pal_dsa.cpp
