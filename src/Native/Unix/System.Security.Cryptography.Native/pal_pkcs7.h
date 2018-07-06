@@ -30,11 +30,11 @@ extern "C" PKCS7* CryptoNative_D2IPkcs7Bio(BIO* bp);
 
 /*
 Create a new PKCS7 instance and prepare it to be a signed PKCS7
-with a data payload.
+with a data payload and certificates.
 
 Returns the new PKCS7 instance.
 */
-extern "C" PKCS7* CryptoNative_Pkcs7CreateSigned();
+extern "C" PKCS7* CryptoNative_Pkcs7Sign(X509Stack* certs);
 
 /*
 Cleans up and deletes a PKCS7 instance.
@@ -60,11 +60,6 @@ Return values:
 certificate contents of the structure.
 */
 extern "C" int32_t CryptoNative_GetPkcs7Certificates(PKCS7* p7, X509Stack** certs);
-
-/*
-Shims the PKCS7_add_certificate function and makes it easier to invoke from managed code.
-*/
-extern "C" int32_t CryptoNative_Pkcs7AddCertificate(PKCS7* p7, X509* x509);
 
 /*
 Returns the number of bytes it will take to convert
