@@ -1392,15 +1392,14 @@ done:
 
 /*
 Function:
-SSLEayVersion
+SSLeay (OpenSSL_version_num for OpenSSL 1.1+)
 
 Gets the version of openssl library.
 
 Return values:
-Textual description of the version on success.
-"not available" string on failure.
+Version number as MNNFFRBB (major minor fix final beta/patch)
 */
-extern "C" char* CryptoNative_SSLEayVersion()
+extern "C" uint32_t CryptoNative_OpenSslVersionNumber()
 {
-    return strdup(SSLeay_version(SSLEAY_VERSION));
+    return (uint32_t)SSLeay();
 }
