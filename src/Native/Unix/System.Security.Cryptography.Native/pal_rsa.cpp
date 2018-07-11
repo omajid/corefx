@@ -82,16 +82,16 @@ static int HasNoPrivateKey(RSA* rsa)
     if (RSA_flags(rsa) & RSA_FLAG_EXT_PKEY)
         return 0;
 
-    BIGNUM* d;
+    BIGNUM const* d;
     RSA_get0_key(rsa, NULL, NULL, &d);
     if (d != NULL)
         return 0;
 
-    BIGNUM* p;
-    BIGNUM* q;
-    BIGNUM* dmp1;
-    BIGNUM* dmq1;
-    BIGNUM* iqmp;
+    BIGNUM const* p;
+    BIGNUM const* q;
+    BIGNUM const* dmp1;
+    BIGNUM const* dmq1;
+    BIGNUM const* iqmp;
     RSA_get0_factors(rsa, &p, &q);
     RSA_get0_crt_params(rsa, &dmp1, &dmq1, &iqmp);
     if (p == NULL || q == NULL || dmp1 == NULL || dmq1 == NULL || iqmp == NULL)
@@ -189,14 +189,14 @@ CryptoNative_RsaVerify(int32_t type, const uint8_t* m, int32_t mlen, uint8_t* si
 }
 
 extern "C" int32_t CryptoNative_GetRsaParameters(const RSA* rsa,
-                                                 BIGNUM** n,
-                                                 BIGNUM** e,
-                                                 BIGNUM** d,
-                                                 BIGNUM** p,
-                                                 BIGNUM** dmp1,
-                                                 BIGNUM** q,
-                                                 BIGNUM** dmq1,
-                                                 BIGNUM** iqmp)
+                                                 const BIGNUM** n,
+                                                 const BIGNUM** e,
+                                                 const BIGNUM** d,
+                                                 const BIGNUM** p,
+                                                 const BIGNUM** dmp1,
+                                                 const BIGNUM** q,
+                                                 const BIGNUM** dmq1,
+                                                 const BIGNUM** iqmp)
 {
     if (!rsa || !n || !e || !d || !p || !dmp1 || !q || !dmq1 || !iqmp)
     {

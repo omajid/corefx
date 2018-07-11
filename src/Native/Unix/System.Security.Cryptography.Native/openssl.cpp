@@ -156,7 +156,7 @@ extern "C" ASN1_TIME* CryptoNative_GetX509CrlNextUpdate(X509_CRL* crl)
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
         return X509_CRL_get_nextUpdate(crl);
 #else
-        return X509_CRL_get0_nextUpdate(crl);
+        return const_cast<ASN1_TIME*>(X509_CRL_get0_nextUpdate(crl));
 #endif
     }
 
@@ -248,7 +248,7 @@ extern "C" ASN1_OBJECT* CryptoNative_GetX509SignatureAlgorithm(X509* x509)
 #else
     if (x509)
     {
-        X509_ALGOR* sig_alg = X509_get0_tbs_sigalg(x509);
+        const X509_ALGOR* sig_alg = X509_get0_tbs_sigalg(x509);
         if (sig_alg)
             return sig_alg->algorithm;
     }    
@@ -487,7 +487,7 @@ extern "C" int32_t CryptoNative_GetX509NameRawBytes(X509_NAME* x509Name, uint8_t
         return -length;
     }
 
-    memcpy_s(pBuf, Int32ToSizeT(cBuf), der, Int32ToSizeT(length));
+    memcpy_s(pBuf, UnsignedCast(cBuf), der, UnsignedCast(length));
     return 1;
 #endif
 }

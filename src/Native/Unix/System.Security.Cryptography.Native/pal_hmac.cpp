@@ -36,14 +36,14 @@ extern "C" HMAC_CTX* CryptoNative_HmacCreate(const uint8_t* key, int32_t keyLen,
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
     HMAC_CTX_init(ctx);
 #endif
-    int ret = HMAC_Init_ex(ctx.get(), key, keyLen, md, nullptr);
+    int ret = HMAC_Init_ex(ctx, key, keyLen, md, nullptr);
 
     if (!ret)
     {
         return nullptr;
     }
 
-    return ctx.release();
+    return ctx;
 }
 
 extern "C" void CryptoNative_HmacDestroy(HMAC_CTX* ctx)

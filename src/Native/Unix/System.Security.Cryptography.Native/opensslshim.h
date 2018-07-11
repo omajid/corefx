@@ -472,8 +472,6 @@ void SSL_get0_alpn_selected(const SSL* ssl, const unsigned char** protocol, unsi
     PER_FUNCTION_BLOCK(SSL_session_reused, true) \
     PER_FUNCTION_BLOCK(TLS_method, true) \
     PER_FUNCTION_BLOCK(X509_up_ref, true) \
-    PER_FUNCTION_BLOCK(X509_get_issuer_name, true) \
-    PER_FUNCTION_BLOCK(X509_get_subject_name, true) \
     PER_FUNCTION_BLOCK(X509_get_version, true) \
     PER_FUNCTION_BLOCK(X509_get_X509_PUBKEY, true) \
     PER_FUNCTION_BLOCK(X509_get0_notAfter, true) \
@@ -829,8 +827,6 @@ FOR_ALL_OPENSSL_FUNCTIONS
 #define SSL_session_reused SSL_session_reused_ptr
 #define TLS_method TLS_method_ptr
 #define X509_up_ref X509_up_ref_ptr
-#define X509_get_issuer_name X509_get_issuer_name_ptr
-#define X509_get_subject_name X509_get_subject_name_ptr
 #define X509_get_version X509_get_version_ptr
 #define X509_get_X509_PUBKEY X509_get_X509_PUBKEY_ptr
 #define X509_get0_notAfter X509_get0_notAfter_ptr

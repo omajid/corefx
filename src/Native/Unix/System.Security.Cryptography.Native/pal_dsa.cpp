@@ -48,7 +48,7 @@ extern "C" int32_t CryptoNative_DsaSizeP(DSA* dsa)
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
     return BN_num_bytes(dsa->p);
 #else
-    BIGNUM* p;
+    BIGNUM const * p;
     DSA_get0_pqg(dsa, &p, NULL, NULL);
     return BN_num_bytes(p);
 #endif
@@ -59,7 +59,7 @@ extern "C" int32_t CryptoNative_DsaSizeQ(DSA* dsa)
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
     return BN_num_bytes(dsa->q);
 #else
-    BIGNUM* q;
+    BIGNUM const * q;
     DSA_get0_pqg(dsa, NULL, &q, NULL);
     return BN_num_bytes(q);
 #endif
@@ -82,7 +82,7 @@ extern "C" int32_t CryptoNative_DsaSign(
     // DSA_OpenSSL() returns a shared pointer, no need to free/cache.
     if (dsa->meth == DSA_OpenSSL() && dsa->priv_key == NULL)
 #else
-    BIGNUM *x;
+    BIGNUM const *x;
     DSA_get0_key(dsa, NULL, &x);
     if (x == NULL)
 #endif
@@ -129,11 +129,11 @@ extern "C" int32_t CryptoNative_DsaVerify(
 
 extern "C" int32_t CryptoNative_GetDsaParameters(
     const DSA* dsa,
-    BIGNUM** p, int32_t* pLength,
-    BIGNUM** q, int32_t* qLength,
-    BIGNUM** g, int32_t* gLength,
-    BIGNUM** y, int32_t* yLength,
-    BIGNUM** x, int32_t* xLength)
+    const BIGNUM** p, int32_t* pLength,
+    const BIGNUM** q, int32_t* qLength,
+    const BIGNUM** g, int32_t* gLength,
+    const BIGNUM** y, int32_t* yLength,
+    const BIGNUM** x, int32_t* xLength)
 {
     if (!dsa || !p || !q || !g || !y || !x)
     {

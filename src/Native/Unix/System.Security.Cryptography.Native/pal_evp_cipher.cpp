@@ -37,7 +37,7 @@ CryptoNative_EvpCipherCreate2(const EVP_CIPHER* type, uint8_t* key, int32_t keyL
 #endif
 
     // Perform partial initialization so we can set the key lengths
-    int ret = EVP_CipherInit_ex(ctx.get(), type, nullptr, nullptr, nullptr, 0);
+    int ret = EVP_CipherInit_ex(ctx, type, nullptr, nullptr, nullptr, 0);
     if (!ret)
     {
         return nullptr;
@@ -46,7 +46,7 @@ CryptoNative_EvpCipherCreate2(const EVP_CIPHER* type, uint8_t* key, int32_t keyL
     if (keyLength > 0)
     {
         // Necessary when the default key size is different than current
-        ret = EVP_CIPHER_CTX_set_key_length(ctx.get(), keyLength / 8);
+        ret = EVP_CIPHER_CTX_set_key_length(ctx, keyLength / 8);
         if (!ret)
         {
             return nullptr;
@@ -56,7 +56,7 @@ CryptoNative_EvpCipherCreate2(const EVP_CIPHER* type, uint8_t* key, int32_t keyL
     if (effectiveKeyLength > 0)
     {
         // Necessary for RC2
-        ret = EVP_CIPHER_CTX_ctrl(ctx.get(), EVP_CTRL_SET_RC2_KEY_BITS, effectiveKeyLength, nullptr);
+        ret = EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_SET_RC2_KEY_BITS, effectiveKeyLength, nullptr);
         if (ret <= 0)
         {
             return nullptr;
@@ -64,13 +64,13 @@ CryptoNative_EvpCipherCreate2(const EVP_CIPHER* type, uint8_t* key, int32_t keyL
     }
 
     // Perform final initialization specifying the remaining arguments
-    ret = EVP_CipherInit_ex(ctx.get(), nullptr, nullptr, key, iv, enc);
+    ret = EVP_CipherInit_ex(ctx, nullptr, nullptr, key, iv, enc);
     if (!ret)
     {
         return nullptr;
     }
 
-    return ctx.release();
+    return ctx;
 }
 
 extern "C" void CryptoNative_EvpCipherDestroy(EVP_CIPHER_CTX* ctx)
@@ -79,14 +79,10 @@ extern "C" void CryptoNative_EvpCipherDestroy(EVP_CIPHER_CTX* ctx)
     {
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
         EVP_CIPHER_CTX_cleanup(ctx);
-<<<<<<< HEAD:src/Native/Unix/System.Security.Cryptography.Native/pal_evp_cipher.cpp
-        delete ctx;
-=======
         free(ctx);
 #else
         EVP_CIPHER_CTX_free(ctx);
 #endif
->>>>>>> Clean up OpenSSL 1.1/BoringSSL code, add support for FEATURE_DISTRO_AGNOSTIC_SSL.:src/Native/Unix/System.Security.Cryptography.Native/pal_evp_cipher.c
     }
 }
 
